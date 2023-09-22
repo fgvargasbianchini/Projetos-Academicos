@@ -1,0 +1,125 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+{Link do colab}
+
+https://colab.research.google.com/drive/1lfgyZ7Bd0ldLhGx0AVOLoDR9ibBto-qg?usp=sharing
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+{primeira célula do colab (Executar as células em ordem)}
+
+pip install pycryptodome
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+{Segunda célula}
+
+import hashlib
+from Crypto import Random
+from Crypto.Cipher import AES
+from base64 import b64encode, b64decode
+
+class AESCipher(object):
+
+    def __init__(self, chave):
+
+        self.tamanho_do_bloco = AES.block_size 
+
+        self.chave = hashlib.sha256(chave.encode()).digest() 
+
+    def criptografar(self, texto_original):
+
+        texto_original = self.__ajustar(texto_original) 
+
+        vetor_de_criptografia = Random.new().read(self.tamanho_do_bloco) 
+        
+        cifrador = AES.new(self.chave, AES.MODE_CBC, vetor_de_criptografia) 
+        
+        txt_encriptado = cifrador.encrypt(texto_original.encode()) 
+       
+        return b64encode(vetor_de_criptografia + txt_encriptado).decode("utf-8")
+
+    def decriptografar(self, txt_encriptado):
+
+        txt_encriptado = b64decode(txt_encriptado) 
+
+        vetor_de_criptografia = txt_encriptado[:self.tamanho_do_bloco] 
+
+        cifrador = AES.new(self.chave, AES.MODE_CBC, vetor_de_criptografia) 
+
+        texto_original = cifrador.decrypt(txt_encriptado[self.tamanho_do_bloco:]).decode("utf-8") 
+        
+        return self.__desajustar(texto_original) 
+
+    def __ajustar(self, texto_original):
+
+        numero_de_bits_para_ajuste = self.tamanho_do_bloco - len(texto_original) % self.tamanho_do_bloco 
+        
+        ascii_string = chr(numero_de_bits_para_ajuste) 
+        
+        string_de_ajuste = numero_de_bits_para_ajuste * ascii_string 
+        
+        texto_ajustado = texto_original + string_de_ajuste 
+        
+        return texto_ajustado #retorna a string ja ajustada
+
+    @staticmethod
+    def __desajustar(texto_original):
+        ultimo_caractere = texto_original[len(texto_original) - 1:] 
+        return texto_original[:-ord(ultimo_caractere)] 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+{Terceira célula}
+
+texto = input("Digite a sua mensagem: ") 
+
+chave_criptografia = input("Digite a chave: ") 
+
+cifrador = AESCipher(chave_criptografia) 
+
+txt_criptografado = cifrador.criptografar(texto) 
+
+print(txt_criptografado) 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+{Quarta célula}
+
+try: 
+
+  txt_criptografado = input("Digite o texo que deseja decriptografar: ") 
+
+  contador_de_tentativas = 2
+
+  cont = True
+
+  chave_decriptografia = input("Digite a chave: ") 
+
+  while cont:
+    if chave_decriptografia == chave_criptografia: 
+
+      decifrar = AESCipher(chave_decriptografia) 
+
+      print(decifrar.decriptografar(txt_criptografado)) 
+
+      cont = False
+
+    elif contador_de_tentativas > 0:
+
+      print("chave incorreta! você tem " + str(contador_de_tentativas) + " tentativa(s) restante(s).")
+
+      chave_decriptografia = input("Digite a chave: ") 
+
+      contador_de_tentativas = contador_de_tentativas - 1
+
+    else:
+      print("O limite de tentativas foi excedido.")
+      cont = False
+
+except:
+  print("O texto não condiz com a chave utilizada.")
